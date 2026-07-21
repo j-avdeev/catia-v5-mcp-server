@@ -43,7 +43,9 @@ Two of the files it touched did gain genuinely GSD-relevant tools alongside the
 contest-scoped growth, and those ARE in scope for this document — folded into the
 module inventory below: `catia_build_slinky_from_points` (`part_design_advanced.py`)
 and `catia_fill_drawing_bom` (`drawing.py`). The BOM tool was live-verified on
-2026-07-21; the slinky tool remains **unverified against live CATIA**.
+2026-07-21; the slinky tool was live-verified the same day with
+`python scripts/smoke_slinky.py`: a 49-point, three-turn guide produced an explicit
+sweep and a closed solid, and the temporary CATPart was closed without saving.
 
 A remote-restart helper now exists and is **live-verified (2026-07-14)**:
 [`scripts/restart_remote_catia_mcp.ps1`](../scripts/restart_remote_catia_mcp.ps1)
@@ -140,15 +142,14 @@ and reference creation.
 `catia_close_surface`, `catia_thick_surface`, `catia_sew_surface`, `catia_split_solid`,
 `catia_face_fillet`, `catia_tritangent_fillet`, `catia_variable_fillet`,
 `catia_advanced_draft`, `catia_build_slinky_from_points` (added since — builds a solid
-slinky spring from explicit guide points + a circular wire profile; **unverified live**,
-see the scope note above)
+slinky spring from explicit guide points + a circular wire profile; **live-verified
+2026-07-21**, see the scope note above)
 
 ### `knowledge.py` — parametric family
 `catia_create_parameter`, `catia_create_formula`, `catia_create_design_table`,
 `catia_copy_parameter_as_link`, `catia_list_relations`, `catia_upsert_formula` (the
-latter three added since; not individually live-verified — the module inventory always
-listed `catia_create_design_table` as implemented, so Open Work item 6 below means
-"unverified," not "not yet coded")
+design table was live-verified 2026-07-21; the latter three were added since and are
+not individually live-verified)
 
 ### `wheel.py` — composite orchestration tool
 `catia_design_wheel` — a single high-level tool taking `rim_diameter`, `rim_width`,
@@ -252,8 +253,10 @@ extension this plan tracks.
    instead of by index, before assuming it's solid. If it works, most of the original
    Stage-1 concern is already resolved by existing code, not new work.
 
-6. **Design table** (`knowledge.py`) is the one Stage-6 gap — formulas exist, a
-   spreadsheet-driven variant table doesn't yet.
+6. **Design table — DONE.** `catia_create_design_table` was live-verified on
+   2026-07-21 with `python scripts/smoke_design_table.py`: a temporary CATPart bound
+   `Wheel_Diameter` and `Spoke_Count` to an external table, and
+   `catia_list_relations` confirmed the resulting `DesignTable` relation.
 
 7. **Wheel spoke styles**: `catia_design_wheel`'s `spoke_style` enum currently only
    accepts `"simple_lofted"`. Expanding the family (turbine, mesh, multi-spoke twin)
@@ -645,7 +648,7 @@ extension this plan tracks.
     full six-view sheet (front/top/right/iso + section + detail) plus a one-call
     `from_part` drawing were built, screenshotted (JPEG), and PDF-exported; the section
     view shows the real barrel/hub cross-section and the detail view a magnified region.
-    Scope excluded (deferred): dimensions, text annotations, DXF.
+    Scope excluded (deferred): dimensions and DXF.
 
     A ninth tool, `catia_fill_drawing_bom` (fills an existing drawing's BOM/specification
     table, matching rows by component name), was added later in the bundled `9be2035`
@@ -655,6 +658,11 @@ extension this plan tracks.
     DrawingTable in a temporary A4 drawing, then found that same table and updated both
     quantities without creating a second table. The temporary CATDrawing was closed
     without saving.
+    A tenth tool, `catia_drawing_add_text`, adds a named text annotation to a chosen
+    drawing view at explicit view-relative millimetre coordinates. It was live-verified
+    on `.42` on 2026-07-21 with `python scripts/smoke_drawing_text.py`: the smoke
+    created `SmokeNote` in `Background View` at `(35, 25)`, then confirmed it through
+    `catia_drawing_info`; the temporary CATDrawing was closed without saving.
 
     Method/behaviour drift found and fixed live (same class as the 3D gotchas):
     - **3D link is `GenerativeBehavior.Document = part_doc`, not `GenerativeLinks.AddLink`.**
@@ -672,7 +680,7 @@ extension this plan tracks.
       SAFEARRAY was accepted as a plain Python tuple (VARIANT fallback path unused so far).
       `DefineSectionView`/`DefineCircularDetailView` auto-name the views (e.g. `SecAA-A`,
       `DetBB`).
-    - Left for a later pass: dimensions/text/DXF; smarter auto-layout (offsets are fixed
+    - Left for a later pass: dimensions/DXF; smarter auto-layout (offsets are fixed
       `gap` mm, not part-size aware — no bounding box available, see item 11); hiding the
       section/detail callout dressing if undesired.
 
